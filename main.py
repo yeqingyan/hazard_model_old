@@ -48,10 +48,11 @@ def main():
     args = parse_args()
     start_date = int(time.mktime(datetime.datetime.strptime(args['d'], "%m/%d/%Y").timetuple()))
     g = get_graphml(args['g'])
-    # g = sample(g, 30/len(g))
+    g = sample(g, 30/len(g))
     g = DynamicNetwork(g)
     model = Hazard.Hazard(g, start_date, WEEK_IN_SECOND, FAKE_HAZARD_BETA)
-    ref_result, fake_data = model.hazard()
+    ref_result, fake_data = model.hazard(verbose=True)
+    exit()
     print(ref_result)
     print("{} steps".format(len(ref_result)))
     # plot(result)
@@ -68,7 +69,7 @@ def main():
 
     sim_model = Hazard.Hazard(g, start_date, WEEK_IN_SECOND, result.params)
     sim_result, _ = sim_model.hazard()
-    plot([ref_result, sim_result])
+    plot({"Reference": ref_result, "MLE result": sim_result})
     return
 
 def print_loglikelihood(exogs, endogs, params):

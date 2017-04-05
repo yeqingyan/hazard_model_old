@@ -18,7 +18,7 @@ class Hazard:
         self.intervals = intervals
         self.beta = beta
 
-    def hazard(self):
+    def hazard(self, verbose=False):
         # TODO fake sentiment value and return it for MLE. Need to replace it with real sentiment value
         # TODO fake adopted time
         fake_data = {}
@@ -32,6 +32,8 @@ class Hazard:
         # dyn_neighbors, total_adopted, _ = self.dynamic_adopted_neighbour_info()
         current_date = self.start_date
 
+        if verbose:
+            print("{:^20} {:^4} {:^16} {:^19} {:^6} {:^8}".format("Node", "Step", "AdoptedNeighbors", "AdoptionPossibility", "Random", "Adoption"))
         while non_adopted:
             # adopted_in_step =
             non_adopted_temp = []
@@ -49,8 +51,8 @@ class Hazard:
                 factors = [1, num_adopted_neighbors, fake_s]
                 adopted_possibility = stats.norm.cdf(np.dot(factors, self.beta))
 
-                if num_adopted_neighbors != 0:
-                    print("Node {} Week {}, adopted neighbors {} Adoption Possibility {:.5f}, got {:.5f}, Adopted".format(n, current_date, num_adopted_neighbors, adopted_possibility, u))
+                # if num_adopted_neighbors != 0:
+                #     print("Node {} Week {}, adopted neighbors {} Adoption Possibility {:.5f}, got {:.5f}, Adopted".format(n, current_date, num_adopted_neighbors, adopted_possibility, u))
                 # # print("friends_factor {}".format(friends_factor))
                 # if friends_factor != 0:
                 #     adopted_possibility += b1 * friends_factor + b2 * fake_s            # TODO fake value
@@ -58,20 +60,28 @@ class Hazard:
                 u = random.uniform(0, 1)
                 # print("adoption possibility {}, random {}".format(adopted_possibility, u))
                 if adopted_possibility >= 0 and u <= adopted_possibility:
+                    adoption = 1
+                    num_adopted += 1
+                else:
+                    adoption = 0
+                    non_adopted_temp.append(n)
+
+                if verbose:
+                    print("{:20} {:^4} {:^16} {:^19.3f} {:^6.3f} {:^8}".format(n, fake_step, num_adopted_neighbors, adopted_possibility, u, adoption))
                     # print(
                     #     "Node {}, neighobrs {} adopted neighbors {} Adopted".format(
                     #         n, self.network.friends(n, current_date), num_adopted_neighbors))
                     # print("Node {} Week {}, adopted neighbors {} Adoption Possibility {:.5f}, got {:.5f}, Adopted".format(n, current_date, num_adopted_neighbors, adopted_possibility, u))
-                    num_adopted += 1
-                    fake_data[(n, current_date)] = (1, num_adopted_neighbors, fake_s)
-                else:
+
+                fake_data[(n, current_date)] = (adoption, num_adopted_neighbors, fake_s)
+                # else:
                     # print(
                     #     "Node {}, neighobrs {} adopted neighbors {} Not Adopted".format(
                     #         n, self.network.friends(n, current_date), num_adopted_neighbors))
                     #
                     # print("Node {} week {} adopted neighbors {} Adoption Possibility {:.5f}, got {:.5f}, Not Adopted".format(n, current_date, num_adopted_neighbors, adopted_possibility, u))
-                    non_adopted_temp.append(n)
-                    fake_data[(n, current_date)] = (0, num_adopted_neighbors, fake_s)
+
+                    # fake_data[(n, current_date)] = (0, num_adopted_neighbors, fake_s)
             non_adopted = non_adopted_temp
             if adopted == []:
                 adopted.append(num_adopted)
