@@ -37,15 +37,23 @@ class Hazard:
             num_adopted = 0
             for n in non_adopted:
                 fake_s = random.uniform(-1, 1)  # TODO fakevalue
-                adopted_possibility = b0 + \
-                                     b1 * self.network.adopted_friends_percentage(n, current_date) +\
-                                     b2 * fake_s            # TODO fake value
+                # print("beta {}".format(self.beta))
+                # print("all friends {}".format(len(self.network.friends(n, current_date))))
+                # print("fake s {}".format(fake_s))
+                adopted_possibility = b0
+                friends_factor = self.network.adopted_friends_percentage(n, current_date)
+                # print("friends_factor {}".format(friends_factor))
+                if friends_factor != 0:
+                    adopted_possibility += b1 * friends_factor + b2 * fake_s            # TODO fake value
                 assert (n, current_date) not in fake_data, "Fatal ERROR, element already exist in fake sentiment"
                 u = random.uniform(0, 1)
+                # print("adoption possibility {}, random {}".format(adopted_possibility, u))
                 if adopted_possibility >= 0 and u <= adopted_possibility:
+                    print("Adoption Possibility {:.5f}, got {:.5f}, Adopted".format(adopted_possibility, u))
                     num_adopted += 1
                     fake_data[(n, current_date)] = (1, fake_step, fake_s)
                 else:
+                    print("Adoption Possibility {:.5f}, got {:.5f}, Not Adopted".format(adopted_possibility, u))
                     non_adopted_temp.append(n)
                     fake_data[(n, current_date)] = (0, fake_step, fake_s)
             non_adopted = non_adopted_temp

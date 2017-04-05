@@ -58,6 +58,7 @@ class DynamicNetwork:
         for friend in friends:
             if self.user_adopted_time(friend) <= current_date:
                 adopted_friends += 1
+        # print("adopted friends {}".format(adopted_friends))
         return adopted_friends / total_friends
 
     def generate_train_data(self, start_date, intervals, stop_step=None):

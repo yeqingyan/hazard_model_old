@@ -5,7 +5,6 @@ from scipy import stats
 class HazardModel(GenericLikelihoodModel):
     def loglike(self, params):
         log_likelihood = 0
-
         # Exog
         #    CONSTANT  ADOPTED_NEIGHBORS  SENTIMENT
         # 0         1                  0  -0.322933
@@ -21,7 +20,7 @@ class HazardModel(GenericLikelihoodModel):
         # 2    0
         # 3    0
         # 4    1
-
+        # params = np.asarray([0.3, 0.3, 0.3])
         for exog, endog in zip(self.exog, self.endog):
             if endog == 1:
                 log_likelihood += stats.norm.logcdf(np.dot(exog, params)).sum()
@@ -30,9 +29,11 @@ class HazardModel(GenericLikelihoodModel):
             else:
                 assert False, "Shouldn't run into this line"
 
-        print("{}, {}".format(params, log_likelihood))
+        # print("{}, {}".format(params, log_likelihood))
         return log_likelihood
 
 
 def get_hazard_mle_result(exog, endog):
-    HazardModel(exog=exog, endog=endog).fit()
+    print(exog.head())
+    exit()
+    # HazardModel(exog=exog, endog=endog).fit()
