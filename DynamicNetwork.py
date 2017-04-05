@@ -46,6 +46,17 @@ class DynamicNetwork:
                 adopted_friends += 1
         return adopted_friends
 
+    # def adopted_friends(self, node, current_date):
+    #     """ Return percentage of adopted friends before current_date """
+    #     friends = self.friends(node, current_date)
+    #     adopted_friends = 0
+    #
+    #     for friend in friends:
+    #         if self.user_adopted_time(friend) <= current_date:
+    #             adopted_friends += 1
+    #     # print("adopted friends {}".format(adopted_friends))
+    #     return adopted_friends
+
     def adopted_friends_percentage(self, node, current_date):
         """ Return percentage of adopted friends before current_date """
         friends = self.friends(node, current_date)

@@ -31,7 +31,12 @@ def get_graphml(input_file):
     :param input_file:  Graphml file
     :return:            Graph
     """
-    return nx.read_graphml(input_file)
+    g = nx.read_graphml(input_file)
+    graph_info(g)
+    print("Remove {} self loops.".format(g.number_of_selfloops()))
+    g.remove_edges_from(g.selfloop_edges())
+    graph_info(g)
+    return g
 
 
 

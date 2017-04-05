@@ -1,7 +1,8 @@
 import random
-import networkx as nx
 from Utils.NetworkUtils import *
 from DynamicNetwork import DynamicNetwork
+from scipy import stats
+import numpy as np
 
 class Hazard:
     def __init__(self, g, start_date, intervals, beta):
@@ -40,22 +41,35 @@ class Hazard:
                 # print("beta {}".format(self.beta))
                 # print("all friends {}".format(len(self.network.friends(n, current_date))))
                 # print("fake s {}".format(fake_s))
-                adopted_possibility = b0
-                friends_factor = self.network.adopted_friends_percentage(n, current_date)
-                # print("friends_factor {}".format(friends_factor))
-                if friends_factor != 0:
-                    adopted_possibility += b1 * friends_factor + b2 * fake_s            # TODO fake value
-                assert (n, current_date) not in fake_data, "Fatal ERROR, element already exist in fake sentiment"
+                num_adopted_neighbors = 0
+                for f in self.network.friends(n, current_date):
+                    if f not in non_adopted:
+                        num_adopted_neighbors += 1
+
+                factors = [1, num_adopted_neighbors, fake_s]
+                adopted_possibility = stats.norm.cdf(np.dot(factors, self.beta))
+
+                # # print("friends_factor {}".format(friends_factor))
+                # if friends_factor != 0:
+                #     adopted_possibility += b1 * friends_factor + b2 * fake_s            # TODO fake value
+                # assert (n, current_date) not in fake_data, "Fatal ERROR, element already exist in fake sentiment"
                 u = random.uniform(0, 1)
                 # print("adoption possibility {}, random {}".format(adopted_possibility, u))
                 if adopted_possibility >= 0 and u <= adopted_possibility:
-                    print("Node {} Week {} Adoption Possibility {:.5f}, got {:.5f}, Adopted".format(n, current_date, adopted_possibility, u))
+                    # print(
+                    #     "Node {}, neighobrs {} adopted neighbors {} Adopted".format(
+                    #         n, self.network.friends(n, current_date), num_adopted_neighbors))
+                    # print("Node {} Week {}, adopted neighbors {} Adoption Possibility {:.5f}, got {:.5f}, Adopted".format(n, current_date, num_adopted_neighbors, adopted_possibility, u))
                     num_adopted += 1
-                    fake_data[(n, current_date)] = (1, friends_factor, fake_s)
+                    fake_data[(n, current_date)] = (1, num_adopted_neighbors, fake_s)
                 else:
-                    print("Node {} week {} Adoption Possibility {:.5f}, got {:.5f}, Not Adopted".format(n, current_date, adopted_possibility, u))
+                    # print(
+                    #     "Node {}, neighobrs {} adopted neighbors {} Not Adopted".format(
+                    #         n, self.network.friends(n, current_date), num_adopted_neighbors))
+
+                    # print("Node {} week {} adopted neighbors {} Adoption Possibility {:.5f}, got {:.5f}, Not Adopted".format(n, current_date, num_adopted_neighbors, adopted_possibility, u))
                     non_adopted_temp.append(n)
-                    fake_data[(n, current_date)] = (0, friends_factor, fake_s)
+                    fake_data[(n, current_date)] = (0, num_adopted_neighbors, fake_s)
             non_adopted = non_adopted_temp
             if adopted == []:
                 adopted.append(num_adopted)
