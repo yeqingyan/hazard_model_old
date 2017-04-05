@@ -56,18 +56,18 @@ class Hazard:
                 u = random.uniform(0, 1)
                 # print("adoption possibility {}, random {}".format(adopted_possibility, u))
                 if adopted_possibility >= 0 and u <= adopted_possibility:
-                    # print(
-                    #     "Node {}, neighobrs {} adopted neighbors {} Adopted".format(
-                    #         n, self.network.friends(n, current_date), num_adopted_neighbors))
-                    # print("Node {} Week {}, adopted neighbors {} Adoption Possibility {:.5f}, got {:.5f}, Adopted".format(n, current_date, num_adopted_neighbors, adopted_possibility, u))
+                    print(
+                        "Node {}, neighobrs {} adopted neighbors {} Adopted".format(
+                            n, self.network.friends(n, current_date), num_adopted_neighbors))
+                    print("Node {} Week {}, adopted neighbors {} Adoption Possibility {:.5f}, got {:.5f}, Adopted".format(n, current_date, num_adopted_neighbors, adopted_possibility, u))
                     num_adopted += 1
                     fake_data[(n, current_date)] = (1, num_adopted_neighbors, fake_s)
                 else:
-                    # print(
-                    #     "Node {}, neighobrs {} adopted neighbors {} Not Adopted".format(
-                    #         n, self.network.friends(n, current_date), num_adopted_neighbors))
+                    print(
+                        "Node {}, neighobrs {} adopted neighbors {} Not Adopted".format(
+                            n, self.network.friends(n, current_date), num_adopted_neighbors))
 
-                    # print("Node {} week {} adopted neighbors {} Adoption Possibility {:.5f}, got {:.5f}, Not Adopted".format(n, current_date, num_adopted_neighbors, adopted_possibility, u))
+                    print("Node {} week {} adopted neighbors {} Adoption Possibility {:.5f}, got {:.5f}, Not Adopted".format(n, current_date, num_adopted_neighbors, adopted_possibility, u))
                     non_adopted_temp.append(n)
                     fake_data[(n, current_date)] = (0, num_adopted_neighbors, fake_s)
             non_adopted = non_adopted_temp
