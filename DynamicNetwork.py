@@ -1,3 +1,4 @@
+import random
 import networkx as nx
 from pandas import DataFrame, Series
 
@@ -11,6 +12,7 @@ class DynamicNetwork:
     def __init__(self, g):
         assert isinstance(g, nx.DiGraph), "Network must be instance of DiGraph"
         self.network = g
+        self.fake_sentiment = {}
 
     def users(self):
         return self.network.nodes()
@@ -72,90 +74,54 @@ class DynamicNetwork:
         # print("adopted friends {}".format(adopted_friends))
         return adopted_friends / total_friends
 
-    def generate_train_data(self, start_date, intervals, stop_step=None):
-        # TODO update return value
-        """ Generate train data for MLE model
+    def sentiment(self, n, current_date):
+        # TODO fake sentiment data
+        if (n, current_date) not in self.fake_sentiment:
+            self.fake_sentiment[(n, current_date)] = random.uniform(-1, 1)
 
-        :param start_date:      Start date in second
-        :param intervals:       Interval between each step in seconds
-        :param stop_step:       Stop step
+        return self.fake_sentiment[(n, current_date)]
 
-        :return:                Train data
-        """
-        ADOPTED_STEP = "AdoptedStep"
-        ADOPTED_NEIGHBORS = "AdoptedNeightbors"
-        SENTIMENT = "SENTIMENT"
-
-        num_non_adopters = len(self.network)
-        adopted_users = []
-        current_date = start_date
+    def generate_train_data(self, start_date, intervals, verbose=False):
+        real_data = {}
         step = 0
 
-        # Build neighbor_info hashmap
-        # "AdoptedStep":          This node adopted step in integer. -1 if node never adopted.
-        # "AdoptedNeightbors":    A list contains the number of this node's adopted neighbors in every step. Note: If a
-        #                         neighbor is adopted in current step, it will not include into the count.
-        # "Sentiment":            A list contains the sentiment value in every step.
-        # TODO neighbor_info get sentiment data
-        neighbor_info = {}
-        for n in self.network.nodes():
-            neighbor_info[n] = {ADOPTED_STEP: -1, ADOPTED_NEIGHBORS: [0], SENTIMENT: [0]}
-        while num_non_adopters > 0:
-            new_adopted = set()
-            for node in self.network.nodes():
-                # Skip the adoptor
-                if neighbor_info[node][ADOPTED_STEP] != -1:
-                    continue
+        # b0, b1, b2 = self.beta
 
-                if self.user_adopted_time(node) <= current_date:
-                    new_adopted.add(node)
-                    num_non_adopters -= 1
+        non_adopted = self.users()
+        adopted = []
 
-                # Skip first step, since first step adopted neighbors are always 0
-                if step == 0:
-                    continue
-                adopted_friends = 0
-                for friend in self.friends(node, current_date):
-                    if self.user_adopted_time(friend) <= current_date:
-                        adopted_friends += 1
-                neighbor_info[node][ADOPTED_NEIGHBORS].append(self.num_adopted_friends(node, current_date))
+        current_date = start_date
+        if verbose:
+            print("{:^20} {:^4} {:^16} {:^8}".format("Node", "Step", "AdoptedNeighbors", "Adoption"))
+        while non_adopted:
+            non_adopted_temp = []
+            num_adopted = 0
+            for n in non_adopted:
+                fake_s = self.sentiment(n, current_date)
 
-            previous = 0
-            if len(adopted_users) > 0:
-                previous = adopted_users[-1]
-            adopted_users.append(len(new_adopted) + previous)
-            for n in new_adopted:
-                neighbor_info[n][ADOPTED_STEP] = step
+                num_adopted_neighbors = 0
+                for f in self.friends(n, current_date):
+                    if f not in non_adopted:
+                        num_adopted_neighbors += 1
 
+                # Demo use
+                sentiment = fake_s
+                adoption = 0
+                if self.user_adopted_time(n) <= current_date:
+                    adoption = 1
+                    num_adopted += 1
+                else:
+                    non_adopted_temp.append(n)
+
+                if verbose:
+                    print("{:20} {:^4} {:^16} {:^8}".format(n, step, num_adopted_neighbors, adoption))
+
+                real_data[(n, current_date)] = (adoption, num_adopted_neighbors, fake_s)
+            non_adopted = non_adopted_temp
+            if adopted == []:
+                adopted.append(num_adopted)
+            else:
+                adopted.append(num_adopted + adopted[-1])
             current_date += intervals
             step += 1
-
-            # fill limited weeks/ days (steps)
-            if stop_step is not None and step >= stop_step:
-                break
-        # print('Final step is step {}'.format(step))
-
-        # Generate train data
-        train_data_exog = []
-        train_data_endog = []
-        for node, value in neighbor_info.iteritems():
-            # TODO check -1 case, 0 case
-            # Adotped user
-            if value[ADOPTED_STEP] != -1:
-                for _adopted_neighbors, _sentiment_value in zip(value[ADOPTED_NEIGHBORS][1:-1], value[SENTIMENT][1:-1]):
-                    train_data_exog.append([1, _adopted_neighbors, _sentiment_value])
-                    train_data_endog.append(0)
-                # Adopted step
-                train_data_exog.append(value[ADOPTED_NEIGHBORS][-1])
-                train_data_endog.append(1)
-            # Never adopted user
-            elif value[ADOPTED_STEP] == -1:
-                for _adopted_neighbors, _sentiment_value in zip(value[ADOPTED_NEIGHBORS][1:], value[SENTIMENT][1:]):
-                    train_data_exog.append([1, _adopted_neighbors, _sentiment_value])
-                    train_data_endog.append(0)
-
-        train_data_exog = DataFrame(train_data_exog, columns=["CONSTANT", "ADOPTED_NEIGHBORS", "SENTIMENT"])
-        train_data_endog = Series(train_data_endog, name="ADOPTION")
-        print(train_data_exog.head())
-        print(train_data_endog.head())
-        return (train_data_exog, train_data_endog)
+        return adopted, real_data

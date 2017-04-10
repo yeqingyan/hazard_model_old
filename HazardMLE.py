@@ -3,7 +3,17 @@ import numpy as np
 from scipy import stats
 
 class HazardModel(GenericLikelihoodModel):
+    def __init__(self, endog, exog, dist):
+        super().__init__(endog=endog, exog=exog)
+        self.dist = dist
+
     def loglike(self, params):
+        if self.dist == None:
+            print("Use normal distrubiton by default")
+            self.dist = stats.norm
+        elif self.dist != stats.norm:
+            print("Use other distrubtion")
+
         log_likelihood = 0
         # Exog
         #    CONSTANT  ADOPTED_NEIGHBORS  SENTIMENT
@@ -23,9 +33,9 @@ class HazardModel(GenericLikelihoodModel):
         # params = np.asarray([0.3, 0.3, 0.3])
         for exog, endog in zip(self.exog, self.endog):
             if endog == 1:
-                log_likelihood += stats.norm.logcdf(np.dot(exog, params)).sum()
+                log_likelihood += self.dist.logcdf(np.dot(exog, params)).sum()
             elif endog == 0:
-                log_likelihood += stats.norm.logcdf(-1 * np.dot(exog, params)).sum()
+                log_likelihood += self.dist.logcdf(-1 * np.dot(exog, params)).sum()
             else:
                 assert False, "Shouldn't run into this line"
 

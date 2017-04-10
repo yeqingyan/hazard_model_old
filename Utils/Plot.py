@@ -6,3 +6,9 @@ def plot(data):
         plt.plot(d, label=k)
     plt.legend()
     plt.show()
+
+def plot_distrubtion(data):
+    for k,d in data.items():
+        plt.hist(d, label=k)
+    plt.legend()
+    plt.show()
