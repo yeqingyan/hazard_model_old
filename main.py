@@ -6,6 +6,7 @@ from Utils.NetworkUtils import *
 from Utils.Plot import *
 from DynamicNetwork import DynamicNetwork
 from HazardMLE import *
+import pickle
 
 WEEK_IN_SECOND = 7 * 24 * 60 * 60
 FAKE_HAZARD_BETA = [0.001, 0.03, 0.03]
@@ -51,7 +52,7 @@ def main():
     g = get_graphml(args['g'])
     # g = sample(g, 30/len(g))
     g = DynamicNetwork(g)
-    model = Hazard.Hazard(g, start_date, WEEK_IN_SECOND, FAKE_HAZARD_BETA)
+    # model = Hazard.Hazard(g, start_date, WEEK_IN_SECOND, FAKE_HAZARD_BETA)
 
     ref_result, real_data = g.generate_train_data(start_date, WEEK_IN_SECOND)
     print(ref_result)
@@ -77,6 +78,8 @@ def main():
     sim_result, prob_dist = sim_model.hazard(stop_step=len(ref_result))
     print(sim_result)
     plot({"Reference": ref_result, "MLE result": sim_result})
+    with open("prob.pickle", 'wb') as f:
+        pickle.dump(prob_dist, f)
     plot_distrubtion({"Prob distrbution": prob_dist})
     return
 
