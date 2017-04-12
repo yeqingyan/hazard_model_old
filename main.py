@@ -7,6 +7,7 @@ from Utils.Plot import *
 from DynamicNetwork import DynamicNetwork
 from HazardMLE import *
 import pickle
+import statsmodels.discrete.discrete_model
 
 WEEK_IN_SECOND = 7 * 24 * 60 * 60
 FAKE_HAZARD_BETA = [0.001, 0.03, 0.03]
@@ -75,12 +76,12 @@ def main():
     # print("Original loglikelihood")
     # print_loglikelihood(exog, endog, FAKE_HAZARD_BETA)
 
-    sim_result, prob_dist = sim_model.hazard(stop_step=len(ref_result))
+    sim_result, prob_dist = sim_model.hazard(stop_step=len(ref_result), dist=stats.norm)
     print(sim_result)
-    plot({"Reference": ref_result, "MLE result": sim_result})
+    plot({"Reference": ref_result, "MLE result": sim_result}, show=False)
     with open("prob.pickle", 'wb') as f:
         pickle.dump(prob_dist, f)
-    plot_distrubtion({"Prob distrbution": prob_dist})
+    plot_distrubtion({"Prob distrbution": prob_dist}, show=False)
     return
 
 def print_loglikelihood(exogs, endogs, params, dist=stats.norm):

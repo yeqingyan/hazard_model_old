@@ -3,16 +3,13 @@ import numpy as np
 from scipy import stats
 
 class HazardModel(GenericLikelihoodModel):
-    def __init__(self, endog, exog, dist):
+    def __init__(self, endog, exog, dist=stats.norm):
         super().__init__(endog=endog, exog=exog)
         self.dist = dist
+        if self.dist != stats.norm:
+            print("Use other distrubtion")
 
     def loglike(self, params):
-        if self.dist == None:
-            print("Use normal distrubiton by default")
-            self.dist = stats.norm
-        elif self.dist != stats.norm:
-            print("Use other distrubtion")
 
         log_likelihood = 0
         # Exog
