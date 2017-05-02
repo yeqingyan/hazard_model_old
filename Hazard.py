@@ -21,16 +21,16 @@ class Hazard:
     def hazard(self, verbose=False, dist=stats.norm, stop_step = -1):
         # TODO fake sentiment value and return it for MLE. Need to replace it with real sentiment value
         # TODO fake adopted time
-        prob_dist = []
+        prob_dist = {}
         fake_step = 0
-
+        current_date = self.start_date
         # b0, b1, b2 = self.beta
 
         non_adopted = self.network.users()
         adopted = []
         # num_non_adopted = len(non_adopted)
         # dyn_neighbors, total_adopted, _ = self.dynamic_adopted_neighbour_info()
-        current_date = self.start_date
+
 
         if verbose:
             print("{:^20} {:^4} {:^16} {:^19} {:^6} {:^8}".format("Node", "Step", "AdoptedNeighbors", "AdoptionPossibility", "Random", "Adoption"))
@@ -39,6 +39,7 @@ class Hazard:
                 break
             non_adopted_temp = []
             num_adopted = 0
+            prob_dist[fake_step] = []
             for n in non_adopted:
                 fake_s = self.network.sentiment(n, current_date)
 
@@ -49,7 +50,7 @@ class Hazard:
 
                 factors = [1, num_adopted_neighbors, fake_s]
                 adopted_probability = stats.norm.cdf(np.dot(factors, self.beta))
-                prob_dist.append(adopted_probability)
+                prob_dist[fake_step].append(adopted_probability)
                 # if num_adopted_neighbors != 0:
                 #     print("Node {} Week {}, adopted neighbors {} Adoption Possibility {:.5f}, got {:.5f}, Adopted".format(n, current_date, num_adopted_neighbors, adopted_possibility, u))
                 # # print("friends_factor {}".format(friends_factor))

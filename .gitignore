@@ -1,2 +1,5 @@
 *.graphml
 __pycache__
+sentiment_json/
+sentiment_data/
+*.pickle

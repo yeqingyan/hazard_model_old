@@ -8,9 +8,11 @@ from DynamicNetwork import DynamicNetwork
 from HazardMLE import *
 import pickle
 import statsmodels.discrete.discrete_model
-
+import logging
+import json
 WEEK_IN_SECOND = 7 * 24 * 60 * 60
 FAKE_HAZARD_BETA = [0.001, 0.03, 0.03]
+STOP_STEP = 13
 
 def parse_args():
     """Input arguments"""
@@ -22,7 +24,6 @@ def parse_args():
     args = vars(parser.parse_args())
     return args
 
-# TODO generate fake data
 def get_formated_train_data(data, verbose=False):
     from pandas import DataFrame, Series
     train_data_exog = []
@@ -34,7 +35,7 @@ def get_formated_train_data(data, verbose=False):
             train_data_endog.append(i[0])
         train_data_exog.sort(key=lambda i: (i[0], i[1]))
         train_data_exog = DataFrame(train_data_exog, columns=["NODEID", "SECONDS", "CONSTANT", "ADOPTED_NEIGHBORS", "SENTIMENT", "ADOPTION"])
-        print(train_data_exog)
+        logging.info(train_data_exog)
 
     train_data_exog = []
     train_data_endog = []
@@ -52,22 +53,26 @@ def main():
     start_date = int(time.mktime(datetime.datetime.strptime(args['d'], "%m/%d/%Y").timetuple()))
     g = get_graphml(args['g'])
     # g = sample(g, 30/len(g))
-    g = DynamicNetwork(g)
-    # model = Hazard.Hazard(g, start_date, WEEK_IN_SECOND, FAKE_HAZARD_BETA)
 
-    ref_result, real_data = g.generate_train_data(start_date, WEEK_IN_SECOND)
-    print(ref_result)
-    print("{} steps".format(len(ref_result)))
+    g = DynamicNetwork(
+            g,
+            json.load(open("./sentiment_data/sentiment.json")),
+            start_date=start_date,
+            intervals=WEEK_IN_SECOND,
+            stop_step=STOP_STEP)
+
+    ref_result, real_data = g.generate_train_data(start_date, WEEK_IN_SECOND, stop_step=STOP_STEP)
+    logging.info(ref_result)
+    logging.info("{} steps".format(len(ref_result)))
     # plot(result)
 
     exog, endog = get_formated_train_data(real_data)
     # print(stats.norm.fit(exog))
-    # exit()
 
     hazard_model = HazardModel(exog=exog, endog=endog, dist=stats.norm)
     # hazard_model.set_distribution(stats.powerlaw)
-    result = hazard_model.fit()
-    print("MLE loglikelihood")
+    result = hazard_model.fit(method="powell")
+    logging.info("MLE loglikelihood")
     print_loglikelihood(exog, endog, result.params)
     sim_model = Hazard.Hazard(g, start_date, WEEK_IN_SECOND, result.params)
     # params = [-1.3810199999999999, 0.087709999999999996, -0.02068]
@@ -76,13 +81,12 @@ def main():
     # print("Original loglikelihood")
     # print_loglikelihood(exog, endog, FAKE_HAZARD_BETA)
 
-    sim_result, prob_dist = sim_model.hazard(stop_step=len(ref_result), dist=stats.norm)
-    print(sim_result)
+    sim_result, prob_dist = sim_model.hazard(stop_step=STOP_STEP, dist=stats.norm)
+    logging.info(sim_result)
     plot({"Reference": ref_result, "MLE result": sim_result}, show=False)
     with open("prob.pickle", 'wb') as f:
         pickle.dump(prob_dist, f)
-    plot_distrubtion({"Prob distrbution": prob_dist}, show=False)
-    return
+    # plot_distrubtion({"Prob distrbution": prob_dist}, show=False)
 
 def print_loglikelihood(exogs, endogs, params, dist=stats.norm):
     exogs = np.asarray(exogs)
@@ -97,12 +101,13 @@ def print_loglikelihood(exogs, endogs, params, dist=stats.norm):
         else:
             assert False, "Shouldn't run into this line"
 
-    print("{}, {}".format([round(i, 5) for i in params], log_likelihood))
+    logging.info("{}, {}".format([round(i, 5) for i in params], log_likelihood))
 
 def get_dist():
     pass
 
 if __name__ == "__main__":
+    logging.basicConfig(filename="hazard.log", level=logging.NOTSET)
     main()
 
 
